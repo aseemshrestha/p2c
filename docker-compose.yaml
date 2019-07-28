@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+
+  redis-docker-container:
+    image: "redis:alpine"
+    hostname: redis
+    ports:
+      - 6379:6379
+
+  mysql-dev:
+    image: mysql:latest
+    container_name: mysql-dev
+    environment:
+      - MYSQL_DATABASE=p2c
+      - MYSQL_ROOT_PASSWORD=rootme
+      - MYSQL_USER=p2cuser
+      - MYSQL_PASSWORD=p2cuser
+    ports:
+      - 3306:3306
+    networks:
+      - mynetwork
+   # restart: always
+    volumes:
+      - p2c:/var/lib/mysql
+
+  p2c-app:
+    #restart: always
+    image: p2c-app
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql-dev
+      - redis-docker-container
+    links:
+      - mysql-dev:mysql
+    ports:
+      - 9090:9090
+    networks:
+      - mynetwork
+    volumes:
+      - /data/p2c-app
+    #restart: on-failure
+
+networks:
+    mynetwork:
+      driver: bridge
+
+volumes:
+  p2c:
